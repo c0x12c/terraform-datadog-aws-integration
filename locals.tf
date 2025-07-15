@@ -90,7 +90,6 @@ locals {
     "sagemakertrainingjobs"          = false
     "sagemakertransformjobs"         = false
     "sagemakerworkteam"              = false
-    "service_quotas"                 = false
     "ses"                            = false
     "shield"                         = false
     "sns"                            = false
