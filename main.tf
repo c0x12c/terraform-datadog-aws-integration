@@ -5,15 +5,16 @@ data "aws_iam_policy_document" "datadog_aws_integration_assume_role" {
     actions = ["sts:AssumeRole"]
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${local.datadog_aws_account_id}:root"]
     }
+
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
 
       values = [
-        "${datadog_integration_aws.sandbox.external_id}"
+        "${datadog_integration_aws_account.sandbox.auth_config.aws_auth_config_role.external_id}"
       ]
     }
   }
@@ -21,7 +22,7 @@ data "aws_iam_policy_document" "datadog_aws_integration_assume_role" {
 
 data "aws_iam_policy_document" "datadog_aws_integration" {
   statement {
-    actions   = var.datadog_permissions == null ? local.datadog_permissions : var.datadog_permissions
+    actions = var.datadog_permissions == null ? local.datadog_permissions : var.datadog_permissions
     resources = ["*"]
   }
 }
@@ -44,13 +45,41 @@ resource "aws_iam_role_policy_attachment" "datadog_aws_integration" {
 
 /**
 Create and manage Datadog - Amazon Web Services integration.
-version = "~> 3.46.0"
-https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_aws
+version = "~> 3.51.0"
+https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_aws_account
  */
-resource "datadog_integration_aws" "sandbox" {
-  account_id                           = data.aws_caller_identity.this.account_id
-  role_name                            = var.datadog_aws_integration_iam_role
-  extended_resource_collection_enabled = false
-  metrics_collection_enabled           = true
-  account_specific_namespace_rules     = var.aws_services_enabled == null ? local.aws_services_enabled : var.aws_services_enabled
+resource "datadog_integration_aws_account" "sandbox" {
+  aws_account_id = data.aws_caller_identity.this.account_id
+  aws_partition  = "aws"
+
+  aws_regions {
+    include_all = true
+  }
+
+  auth_config {
+    aws_auth_config_role {
+      role_name = var.datadog_aws_integration_iam_role
+    }
+  }
+
+  logs_config {
+    lambda_forwarder {}
+  }
+
+  metrics_config {
+    collect_custom_metrics = true
+
+    namespace_filters {
+      include_only = local.enabled_aws_service_names
+    }
+  }
+
+  resources_config {
+    cloud_security_posture_management_collection = true
+    extended_collection                          = true
+  }
+
+  traces_config {
+    xray_services {}
+  }
 }

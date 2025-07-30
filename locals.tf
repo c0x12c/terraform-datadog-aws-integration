@@ -1,7 +1,7 @@
 locals {
   datadog_aws_account_id = "464622532012"
 
-  aws_services_enabled = {
+  aws_services_enabled = var.aws_services_enabled != null ? var.aws_services_enabled : {
     "api_gateway"                    = false
     "application_elb"                = false
     "apprunner"                      = false
@@ -192,5 +192,11 @@ locals {
     "tag:GetTagValues",
     "xray:BatchGetTraces",
     "xray:GetTraceSummaries"
+  ]
+}
+
+locals {
+  enabled_aws_service_names = [
+    for service_name, is_enabled in var.aws_services_enabled : service_name if is_enabled
   ]
 }

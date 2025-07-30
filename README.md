@@ -26,42 +26,44 @@ module "datadog_aws_integration" {
 - [Example](./examples/complete/)
 
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
-| Name                                                                      | Version  |
-|---------------------------------------------------------------------------|----------|
+| Name | Version |
+|------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.8 |
-| <a name="requirement_datadog"></a> [datadog](#requirement\_datadog)       | >= 3.50  |
-| <a name="requirement_google"></a> [google](#requirement\_google)          | >= 6.12  |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.75 |
+| <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~> 3.66.0 |
 
 ## Providers
 
-| Name                                                          | Version |
-|---------------------------------------------------------------|---------|
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | >= 3.50 |
-| <a name="provider_google"></a> [google](#provider\_google)    | >= 6.12 |
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.6.0 |
+| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 3.66.0 |
 
 ## Modules
 
-| Name                                                                                | Source                          | Version |
-|-------------------------------------------------------------------------------------|---------------------------------|---------|
-| <a name="module_service_account"></a> [service\_account](#module\_service\_account) | ../../../../gcp/service-account | n/a     |
+No modules.
 
 ## Resources
 
-| Name                                                                                                                                                | Type     |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| [datadog_integration_gcp_sts.this](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_gcp_sts)               | resource |
-| [google_service_account_iam_member.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account_iam_member) | resource |
+| Name | Type |
+|------|------|
+| [aws_iam_policy.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [datadog_integration_aws_account.sandbox](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_aws_account) | resource |
+| [aws_caller_identity.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.datadog_aws_integration_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
-| Name                                                                                         | Description                                                                                                                                                                                                                                               | Type           | Default                                                                                                                                                                  | Required |
-|----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------:|
-| <a name="input_datadog_account_id"></a> [datadog\_account\_id](#input\_datadog\_account\_id) | The datadog account name to create.                                                                                                                                                                                                                       | `string`       | n/a                                                                                                                                                                      |   yes    |
-| <a name="input_datadog_roles"></a> [datadog\_roles](#input\_datadog\_roles)                  | Datadog service account should have compute.viewer, monitoring.viewer, cloudasset.viewer, and browser roles (the browser role is only required in the default project of the service account).                                                            | `list(string)` | <pre>[<br/>  "roles/compute.viewer",<br/>  "roles/container.viewer",<br/>  "roles/monitoring.viewer",<br/>  "roles/cloudasset.viewer",<br/>  "roles/browser"<br/>]</pre> |    no    |
-| <a name="input_host_filters"></a> [host\_filters](#input\_host\_filters)                     | A string used to filter the hosts sent from GCP to Datadog. Only hosts matching the specified tags will be included. Tags should be in the format 'key:value' and multiple tags can be separated by commas (e.g., 'environment:production,datadog:true'). | `string`       | `"datadog:true"`                                                                                                                                                         |    no    |
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_aws_services_enabled"></a> [aws\_services\_enabled](#input\_aws\_services\_enabled) | A map of AWS services with their enabled/disabled metric collection for specific AWS namespaces for this AWS account only. Reference: https://docs.datadoghq.com/integrations/#cat-aws. | `map(bool)` | `null` | no |
+| <a name="input_datadog_aws_integration_iam_role"></a> [datadog\_aws\_integration\_iam\_role](#input\_datadog\_aws\_integration\_iam\_role) | Name of the IAM role used for integrating Datadog with AWS. | `string` | `"DatadogAWSIntegrationRole"` | no |
+| <a name="input_datadog_permissions"></a> [datadog\_permissions](#input\_datadog\_permissions) | List of AWS IAM permissions required for Datadog integration with AWS services. Reference: https://docs.datadoghq.com/integrations/amazon_web_services/#aws-integration-iam-policy. | `list(string)` | `null` | no |
 
 ## Outputs
 
