@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "datadog_aws_integration_assume_role" {
       variable = "sts:ExternalId"
 
       values = [
-        "${datadog_integration_aws.sandbox.external_id}"
+        datadog_integration_aws.sandbox.external_id
       ]
     }
   }
