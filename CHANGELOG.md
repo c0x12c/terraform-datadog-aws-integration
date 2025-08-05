@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1]() (2025-08-05)
+
+### Changes
+
+* Update `DataDog/datadog` requirement from `~> 3.66.0` to `~> 3.69.0`.
+
 ## [1.0.0]() (2025-07-15)
 
 ### BREAKING CHANGES
