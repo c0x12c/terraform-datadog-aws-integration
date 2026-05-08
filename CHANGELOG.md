@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2]() (2026-05-08)
+
+### Features
+
+* Add `aws_attached_policy_arns` variable to attach additional managed AWS policy ARNs (e.g. `SecurityAudit`) to the Datadog AWS integration IAM role.
+
 ## [1.0.1]() (2025-08-05)
 
 ### Changes
