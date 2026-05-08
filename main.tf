@@ -42,6 +42,12 @@ resource "aws_iam_role_policy_attachment" "datadog_aws_integration" {
   policy_arn = aws_iam_policy.datadog_aws_integration.arn
 }
 
+resource "aws_iam_role_policy_attachment" "datadog_aws_integration_managed" {
+  for_each   = toset(var.aws_attached_policy_arns)
+  role       = aws_iam_role.datadog_aws_integration.name
+  policy_arn = each.value
+}
+
 /**
 Create and manage Datadog - Amazon Web Services integration.
 version = "~> 3.46.0"

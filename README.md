@@ -52,6 +52,7 @@ No modules.
 | [aws_iam_policy.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.datadog_aws_integration_managed](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [datadog_integration_aws.sandbox](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_aws) | resource |
 | [aws_caller_identity.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.datadog_aws_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -64,6 +65,7 @@ No modules.
 | <a name="input_aws_services_enabled"></a> [aws\_services\_enabled](#input\_aws\_services\_enabled) | A map of AWS services with their enabled/disabled metric collection for specific AWS namespaces for this AWS account only. Reference: https://docs.datadoghq.com/integrations/#cat-aws. | `map(bool)` | `null` | no |
 | <a name="input_datadog_aws_integration_iam_role"></a> [datadog\_aws\_integration\_iam\_role](#input\_datadog\_aws\_integration\_iam\_role) | Name of the IAM role used for integrating Datadog with AWS. | `string` | `"DatadogAWSIntegrationRole"` | no |
 | <a name="input_datadog_permissions"></a> [datadog\_permissions](#input\_datadog\_permissions) | List of AWS IAM permissions required for Datadog integration with AWS services. Reference: https://docs.datadoghq.com/integrations/amazon_web_services/#aws-integration-iam-policy. | `list(string)` | `null` | no |
+| <a name="input_aws_attached_policy_arns"></a> [aws\_attached\_policy\_arns](#input\_aws\_attached\_policy\_arns) | List of AWS policy ARNs to attach to the Datadog AWS integration IAM role (e.g. arn:aws:iam::aws:policy/SecurityAudit). | `list(string)` | `[]` | no |
 
 ## Outputs
 

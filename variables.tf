@@ -15,3 +15,9 @@ variable "aws_services_enabled" {
   type        = map(bool)
   default     = null
 }
+
+variable "aws_attached_policy_arns" {
+  description = "List of AWS policy ARNs to attach to the Datadog AWS integration IAM role (e.g. arn:aws:iam::aws:policy/SecurityAudit)."
+  type        = list(string)
+  default     = []
+}
