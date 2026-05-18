@@ -10,9 +10,15 @@ variable "datadog_permissions" {
   default     = null
 }
 
-variable "aws_services_enabled" {
-  description = "A map of AWS services with their enabled/disabled metric collection for specific AWS namespaces for this AWS account only. Reference: https://docs.datadoghq.com/integrations/#cat-aws."
-  type        = map(bool)
+variable "namespace_filters_include_only" {
+  description = "Collect metrics only from these AWS CloudWatch namespaces (e.g. [\"AWS/ElastiCache\", \"AWS/RDS\"]). Mutually exclusive with namespace_filters_exclude_only. Reference: https://docs.datadoghq.com/integrations/#cat-aws."
+  type        = list(string)
+  default     = ["AWS/ElastiCache", "AWS/RDS"]
+}
+
+variable "namespace_filters_exclude_only" {
+  description = "Exclude these AWS CloudWatch namespaces from metrics collection; all others are collected. Mutually exclusive with namespace_filters_include_only. Ignored when namespace_filters_include_only is set. Reference: https://docs.datadoghq.com/integrations/#cat-aws."
+  type        = list(string)
   default     = null
 }
 
