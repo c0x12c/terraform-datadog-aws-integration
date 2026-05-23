@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 * Upgrade Datadog Terraform provider from `~> 3.81.0` to `~> 4.9.0`.
 * Replace removed `datadog_integration_aws` resource with `datadog_integration_aws_account`.
 * Replace `aws_services_enabled` variable (`map(bool)`) with `namespace_filters_include_only` and `namespace_filters_exclude_only` (`list(string)`). Callers must migrate — see `RUNBOOK-provider-v4-upgrade.md`.
+* Default for `namespace_filters_include_only` expanded to cover all AWS CloudWatch namespaces (previously `["AWS/ElastiCache", "AWS/RDS"]`). Override with a subset to restrict metric collection.
 
 ### Migration
 
