@@ -150,7 +150,51 @@ lifecycle {
 
 ## Upgrade Procedure
 
-### Step 1 — Update provider version
+> **Why state rm → import (not just import)?**
+> Terraform tracks resources by `<type>.<name>`. The type name changed from
+> `datadog_integration_aws` to `datadog_integration_aws_account`, so Terraform
+> cannot carry the state entry across automatically. If you skip `state rm` and
+> run `terraform plan`, Terraform will plan to **destroy** the old resource and
+> **create** a new one — which would delete the live Datadog AWS integration.
+> The correct sequence is always: **back up → state rm → import → plan → apply**.
+
+### Step 1 — Back up current state
+
+Always take a snapshot before any state surgery:
+
+```bash
+# Pull the current state to a local file (use a date suffix so you can find it later)
+terraform state pull > terraform-state-backup-$(date +%Y%m%d-%H%M%S).tfstate
+
+# Confirm the backup is non-empty
+wc -c terraform-state-backup-*.tfstate
+```
+
+Keep this file. You will need it for rollback Option A.
+
+### Step 2 — Note the existing resource details
+
+Capture the AWS account ID and role name from the current state before removing it:
+
+```bash
+terraform state show datadog_integration_aws.sandbox
+```
+
+Example output:
+```
+# datadog_integration_aws.sandbox:
+resource "datadog_integration_aws" "sandbox" {
+    account_id                          = "123456789012"
+    role_name                           = "DatadogAWSIntegrationRole"
+    external_id                         = "abc123..."
+    metrics_collection_enabled          = "true"
+    ...
+}
+```
+
+Note down `account_id` — you will need it when querying the Datadog API.
+
+### Step 3 — Update provider version
 
 The `versions.tf` already pins `~> 4.9.0`. Run:
 
@@ -158,45 +202,72 @@ The `versions.tf` already pins `~> 4.9.0`. Run:
 terraform init -upgrade
 ```
 
-### Step 2 — Import existing integration into new resource
-
-The old state key is `datadog_integration_aws.sandbox`. The new resource type requires a re-import because the resource type name changed.
-
-First, retrieve your Datadog AWS Account Config ID:
+### Step 4 — Remove the old resource from state
 
 ```bash
-# Using Datadog API — replace DD_API_KEY and DD_APP_KEY with your credentials
+# Verify the address before removing
+terraform state list | grep datadog_integration_aws
+
+# Remove the old resource type from state (does NOT touch the live Datadog resource)
+terraform state rm datadog_integration_aws.sandbox
+```
+
+After this command, `terraform plan` would show a `+create` for `datadog_integration_aws_account.sandbox` because the state is empty for that address. **Do not apply yet** — import first.
+
+### Step 5 — Retrieve the Datadog account config ID
+
+The new resource type uses a Datadog-internal UUID as its import ID, not the AWS account ID.
+
+```bash
+# Replace 123456789012 with your AWS account ID from Step 2
+export DD_API_KEY="<your-datadog-api-key>"
+export DD_APP_KEY="<your-datadog-app-key>"
+export AWS_ACCOUNT_ID="123456789012"
+
 curl -s "https://api.datadoghq.com/api/v2/integration/aws/accounts" \
   -H "DD-API-KEY: ${DD_API_KEY}" \
   -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
-  | jq '.data[] | select(.attributes.aws_account_id == "<YOUR_AWS_ACCOUNT_ID>") | .id'
+  | jq -r '.data[] | select(.attributes.aws_account_id == "'${AWS_ACCOUNT_ID}'") | .id'
 ```
 
-Remove the old resource from state and import under the new address:
+Example output:
+```
+a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+This UUID is the import ID for the next step.
+
+### Step 6 — Import into the new resource address
 
 ```bash
-# Remove old resource from state
-terraform state rm datadog_integration_aws.sandbox
-
-# Import into new resource (use the ID returned from the API call above)
-terraform import datadog_integration_aws_account.sandbox "<datadog-aws-account-config-id>"
+terraform import datadog_integration_aws_account.sandbox "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 ```
 
-### Step 3 — Validate the plan
+Verify the import populated state correctly:
+
+```bash
+terraform state show datadog_integration_aws_account.sandbox
+```
+
+You should see `aws_account_id`, `auth_config`, `metrics_config`, etc. populated.
+
+### Step 7 — Validate the plan
 
 ```bash
 terraform plan
 ```
 
-Expected: no destructive changes. The plan should show only in-place attribute updates (if any) reflecting the new schema defaults.
+Expected: **no destructive changes**. The plan may show minor in-place attribute updates (provider-side defaults being reconciled) but must not show any `destroy` or `create` actions on `datadog_integration_aws_account.sandbox`.
 
-### Step 4 — Apply
+If the plan shows a destroy + create, stop and investigate before proceeding — do **not** apply.
+
+### Step 8 — Apply
 
 ```bash
 terraform apply
 ```
 
-### Step 5 — Verify in Datadog UI
+### Step 9 — Verify in Datadog UI
 
 1. Navigate to **Integrations → AWS** in Datadog.
 2. Confirm the AWS account still appears and the integration status is healthy.
@@ -206,20 +277,115 @@ terraform apply
 
 ## Rollback
 
-If the upgrade causes issues:
+If the upgrade causes issues, choose the option that matches your situation.
 
-1. Revert `versions.tf` to `~> 3.81.0`
-2. Revert `main.tf`, `variables.tf`, `locals.tf`, and examples to the previous state (use git)
-3. Remove the new state entry and restore the old one:
+---
+
+### Option A — Restore from the state backup (preferred)
+
+Use this when you have the backup file created in Step 1 and have not yet destroyed any infrastructure.
+
+**1. Revert the code**
 
 ```bash
-terraform state rm datadog_integration_aws_account.sandbox
-# Restore old state from a backup (terraform state push backup.tfstate) or re-import
-terraform import datadog_integration_aws.sandbox "<aws_account_id>"
+git checkout master -- versions.tf main.tf variables.tf locals.tf examples/complete/main.tf
 ```
 
-4. Run `terraform init -upgrade` to downgrade the provider lock file
-5. Run `terraform plan` to confirm the state is clean
+**2. Remove the new state entry**
+
+```bash
+# Confirm the current address
+terraform state list | grep datadog_integration_aws_account
+
+terraform state rm datadog_integration_aws_account.sandbox
+```
+
+**3. Push the backup state**
+
+```bash
+# Identify your backup file (created in Step 1 of the upgrade)
+ls terraform-state-backup-*.tfstate
+
+# Push the backup back — this restores datadog_integration_aws.sandbox in state
+terraform state push terraform-state-backup-<timestamp>.tfstate
+```
+
+**4. Downgrade the provider lock file**
+
+```bash
+terraform init -upgrade
+```
+
+**5. Verify**
+
+```bash
+terraform state show datadog_integration_aws.sandbox   # should show the old resource
+terraform plan                                         # expected: no changes
+```
+
+---
+
+### Option B — Re-import without a backup
+
+Use this when no backup is available (e.g., the backup was lost or the upgrade was done without taking one).
+
+**1. Revert the code**
+
+```bash
+git checkout master -- versions.tf main.tf variables.tf locals.tf examples/complete/main.tf
+```
+
+**2. Downgrade the provider lock file**
+
+```bash
+terraform init -upgrade
+```
+
+**3. Remove the new state entry (if it still exists)**
+
+```bash
+terraform state list | grep datadog_integration_aws_account
+# If it appears, remove it:
+terraform state rm datadog_integration_aws_account.sandbox
+```
+
+**4. Re-import the old resource type**
+
+The old `datadog_integration_aws` resource uses the **AWS account ID** (12-digit number) as its import ID — not the Datadog UUID:
+
+```bash
+# Replace with your actual AWS account ID
+terraform import datadog_integration_aws.sandbox "123456789012"
+```
+
+Example output:
+```
+datadog_integration_aws.sandbox: Importing from ID "123456789012"...
+datadog_integration_aws.sandbox: Import prepared!
+datadog_integration_aws.sandbox: Refreshing state... [id=123456789012]
+
+Import successful!
+```
+
+**5. Verify the imported state**
+
+```bash
+terraform state show datadog_integration_aws.sandbox
+```
+
+Check that `account_id`, `role_name`, and `metrics_collection_enabled` match what you recorded in Step 2 of the upgrade.
+
+**6. Validate the plan**
+
+```bash
+terraform plan
+```
+
+Expected: no destructive changes. If the plan shows updates to `account_specific_namespace_rules` or other attributes, review them carefully — they reflect drift between the live resource and the previous Terraform configuration. Apply only if the changes are safe.
+
+```bash
+terraform apply
+```
 
 ---
 
