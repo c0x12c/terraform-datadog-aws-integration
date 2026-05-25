@@ -50,6 +50,63 @@ resources_config {}
 traces_config  { xray_services {} }
 ```
 
+#### Attribute explanations
+
+**`aws_partition = "aws"`**
+Identifies the AWS partition the account belongs to. Must be one of `"aws"` (standard global regions), `"aws-cn"` (China regions), or `"aws-us-gov"` (GovCloud). This is a top-level required string — the provider will reject the resource if omitted.
+
+**`aws_regions {}`**
+Controls which AWS regions Datadog monitors. An empty block means **all current and future regions** are included automatically. To restrict to specific regions, populate the `include_only` argument:
+```hcl
+aws_regions {
+  include_only = ["us-east-1", "us-west-2", "ap-southeast-1"]
+}
+```
+
+**`logs_config { lambda_forwarder {} }`**
+Configures log collection settings. The nested `lambda_forwarder` block defines which Lambda functions ship logs to Datadog (by ARN or prefix). An empty `lambda_forwarder {}` block keeps log forwarding enabled with provider defaults (no ARN filters). To add forwarder ARNs:
+```hcl
+logs_config {
+  lambda_forwarder {
+    lambdas  = ["arn:aws:lambda:us-east-1:123456789012:function:datadog-forwarder"]
+    sources  = ["s3"]
+  }
+}
+```
+
+**`metrics_config { namespace_filters {} }`**
+Controls CloudWatch metric collection. The nested `namespace_filters` block accepts `include_only` or `exclude_only` lists of AWS CloudWatch namespace strings. An empty `namespace_filters {}` block collects metrics from **all namespaces**. To restrict:
+```hcl
+metrics_config {
+  namespace_filters {
+    include_only = ["AWS/ElastiCache", "AWS/RDS", "AWS/EC2"]
+    # or to exclude specific ones:
+    # exclude_only = ["AWS/Billing"]
+  }
+}
+```
+`include_only` and `exclude_only` are mutually exclusive — setting both is a runtime error enforced by the `lifecycle.precondition` in `main.tf`.
+
+**`resources_config {}`**
+Controls extended resource collection (resource tags, configurations, and relationships beyond metrics). The key argument is `extended_collection` (bool, default `true`) which enables collection of detailed resource metadata used to populate Datadog's infrastructure list and resource catalog. An empty block uses provider defaults (extended collection on):
+```hcl
+resources_config {
+  extended_collection = true   # collect resource configs and tags
+  cloud_security_posture_management_collection = false  # CSPM — enable if using Datadog Cloud Security
+}
+```
+
+**`traces_config { xray_services {} }`**
+Configures AWS X-Ray trace ingestion. The nested `xray_services` block controls which X-Ray services are scraped. An empty `xray_services {}` block enables X-Ray collection for all services. To restrict to specific services:
+```hcl
+traces_config {
+  xray_services {
+    include_only = ["ApiGateway", "Lambda"]
+  }
+}
+```
+Leave as `xray_services {}` if you do not use X-Ray — Datadog will simply find no traces to ingest.
+
 ### Namespace filter format change
 
 Old (`account_specific_namespace_rules`):
