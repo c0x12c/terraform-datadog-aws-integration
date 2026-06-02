@@ -11,9 +11,9 @@ variable "datadog_permissions" {
 }
 
 variable "namespace_filters_include_only" {
-  description = "Collect metrics only from these AWS CloudWatch namespaces (e.g. [\"AWS/ElastiCache\", \"AWS/RDS\"]). Mutually exclusive with namespace_filters_exclude_only. When null, all namespaces are collected. Reference: https://docs.datadoghq.com/integrations/#cat-aws."
+  description = "Collect metrics only from these AWS CloudWatch namespaces (e.g. [\"AWS/ElastiCache\", \"AWS/RDS\"]). Mutually exclusive with namespace_filters_exclude_only. Reference: https://docs.datadoghq.com/integrations/#cat-aws."
   type        = list(string)
-  default     = ["AWS/ElastiCache", "AWS/RDS"]
+  default     = null
 }
 
 variable "namespace_filters_exclude_only" {

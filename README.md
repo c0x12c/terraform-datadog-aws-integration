@@ -8,8 +8,7 @@ Terraform module which creates Datadog AWS integration resources and the require
 module "datadog_aws_integration" {
   source = "github.com/spartan-stratos/terraform-modules//datadog/aws-integration?ref=v2.0.0"
 
-  # Default: all AWS CloudWatch namespaces are collected.
-  # To restrict collection, override namespace_filters_include_only with a subset:
+  # Default: null (collect all namespaces). Override to restrict to specific namespaces:
   namespace_filters_include_only = ["AWS/ElastiCache", "AWS/RDS", "AWS/EC2"]
 
   # To exclude specific namespaces instead (mutually exclusive with include_only):
@@ -60,7 +59,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_datadog_aws_integration_iam_role"></a> [datadog\_aws\_integration\_iam\_role](#input\_datadog\_aws\_integration\_iam\_role) | Name of the IAM role used for integrating Datadog with AWS. | `string` | `"DatadogAWSIntegrationRole"` | no |
 | <a name="input_datadog_permissions"></a> [datadog\_permissions](#input\_datadog\_permissions) | List of AWS IAM permissions required for Datadog integration with AWS services. Reference: https://docs.datadoghq.com/integrations/amazon_web_services/#aws-integration-iam-policy. | `list(string)` | `null` | no |
-| <a name="input_namespace_filters_include_only"></a> [namespace\_filters\_include\_only](#input\_namespace\_filters\_include\_only) | Collect metrics only from these AWS CloudWatch namespaces (e.g. `["AWS/ElastiCache", "AWS/RDS"]`). Mutually exclusive with `namespace_filters_exclude_only`. When null, all namespaces are collected. | `list(string)` | `["AWS/ElastiCache", "AWS/RDS"]` | no |
+| <a name="input_namespace_filters_include_only"></a> [namespace\_filters\_include\_only](#input\_namespace\_filters\_include\_only) | Collect metrics only from these AWS CloudWatch namespaces. Mutually exclusive with `namespace_filters_exclude_only`. | `list(string)` | `null` | no |
 | <a name="input_namespace_filters_exclude_only"></a> [namespace\_filters\_exclude\_only](#input\_namespace\_filters\_exclude\_only) | Exclude these AWS CloudWatch namespaces from metrics collection; all others are collected. Mutually exclusive with `namespace_filters_include_only`. | `list(string)` | `null` | no |
 | <a name="input_aws_attached_policy_arns"></a> [aws\_attached\_policy\_arns](#input\_aws\_attached\_policy\_arns) | List of AWS policy ARNs to attach to the Datadog AWS integration IAM role (e.g. arn:aws:iam::aws:policy/SecurityAudit). | `list(string)` | `[]` | no |
 

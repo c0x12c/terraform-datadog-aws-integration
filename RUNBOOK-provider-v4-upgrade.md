@@ -122,13 +122,10 @@ New (`namespace_filters`):
 ```hcl
 metrics_config {
   namespace_filters {
-    # Collect all namespaces (module default — omit include_only entirely, or pass all namespaces):
-    include_only = ["AWS/EC2", "AWS/RDS", "AWS/ElastiCache", ...]  # truncated; see variables.tf for full list
+    # Collect specific namespaces (default is null — all namespaces):
+    # include_only = ["AWS/ElastiCache", "AWS/RDS", "AWS/EC2", "AWS/Lambda"]
 
-    # Or restrict to a subset:
-    # include_only = ["AWS/ElastiCache", "AWS/RDS"]
-
-    # Or exclude specific namespaces (mutually exclusive with include_only):
+    # Or exclude specific namespaces instead (mutually exclusive with include_only):
     # exclude_only = ["AWS/Billing"]
   }
 }
@@ -165,7 +162,7 @@ Common service name → AWS namespace mapping:
 | `states` | `AWS/States` |
 | `wafv2` | `AWS/WAFV2` |
 
-The module default (`namespace_filters_include_only` in `variables.tf`) now covers all known AWS CloudWatch namespaces. Use the `datadog_integration_aws_available_namespaces` data source or the [Datadog API](https://docs.datadoghq.com/api/latest/aws-integration/) to discover any newly added namespaces.
+Both `namespace_filters_include_only` and `namespace_filters_exclude_only` default to `null`, which collects all namespaces. Set one or the other to restrict collection — they are mutually exclusive.
 
 ---
 
@@ -181,7 +178,7 @@ The module default (`namespace_filters_include_only` in `variables.tf`) now cove
 
 ### `variables.tf`
 - Removed: `aws_services_enabled` (`map(bool)`)
-- Added: `namespace_filters_include_only` (`list(string)`, default: `["AWS/ElastiCache", "AWS/RDS"]`)
+- Added: `namespace_filters_include_only` (`list(string)`, default: `null` — collect all namespaces)
 - Added: `namespace_filters_exclude_only` (`list(string)`, default `null`)
 
 ### `main.tf` — mutual exclusivity guard
@@ -328,7 +325,7 @@ terraform apply
 
 1. Navigate to **Integrations → AWS** in Datadog.
 2. Confirm the AWS account still appears and the integration status is healthy.
-3. Check that metric collection is active for the expected namespaces (all AWS CloudWatch namespaces by default; override with `namespace_filters_include_only` or `namespace_filters_exclude_only` to restrict).
+3. Check that metric collection is active for the expected namespaces (all namespaces by default; use `namespace_filters_include_only` or `namespace_filters_exclude_only` to restrict).
 
 ---
 
