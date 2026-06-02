@@ -181,7 +181,7 @@ The module default (`namespace_filters_include_only` in `variables.tf`) now cove
 
 ### `variables.tf`
 - Removed: `aws_services_enabled` (`map(bool)`)
-- Added: `namespace_filters_include_only` (`list(string)`, default: all AWS CloudWatch namespaces — see `variables.tf` for the full list)
+- Added: `namespace_filters_include_only` (`list(string)`, default: `["AWS/ElastiCache", "AWS/RDS"]`)
 - Added: `namespace_filters_exclude_only` (`list(string)`, default `null`)
 
 ### `main.tf` — mutual exclusivity guard
@@ -201,7 +201,7 @@ lifecycle {
 - Consolidated specific `elasticache:DescribeCacheClusters`, `elasticache:ListTagsForResource`, `elasticache:DescribeEvents` permissions into existing wildcards `elasticache:Describe*` and `elasticache:List*` — no net permissions change
 
 ### `examples/complete/main.tf`
-- Replaced `aws_services_enabled` map with `namespace_filters_include_only` set to all AWS CloudWatch namespaces (reflects the module default)
+- Replaced `aws_services_enabled` map with a representative `namespace_filters_include_only` subset to illustrate usage
 
 ---
 
