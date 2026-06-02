@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0]() (2026-05-19)
+
+### BREAKING CHANGES
+
+* Upgrade Datadog Terraform provider from `~> 3.81.0` to `~> 4.9.0`.
+* Replace removed `datadog_integration_aws` resource with `datadog_integration_aws_account`.
+* Replace `aws_services_enabled` variable (`map(bool)`) with `namespace_filters_include_only` and `namespace_filters_exclude_only` (`list(string)`), both defaulting to `null` (collect all namespaces). Callers must migrate — see `RUNBOOK-provider-v4-upgrade.md`.
+
+### Migration
+
+See [RUNBOOK-provider-v4-upgrade.md](./RUNBOOK-provider-v4-upgrade.md) for step-by-step state migration instructions.
+
 ## [1.0.2]() (2026-05-08)
 
 ### Features

@@ -1,12 +1,14 @@
-locals {
-  aws_services_enabled = {
-    "elasticache" = true
-    "rds"         = true
-  }
-}
-
 module "datadog_aws_integration" {
   source = "../../"
 
-  aws_services_enabled = local.aws_services_enabled
+  # Default is null (collect all namespaces). Set to a list to restrict collection:
+  namespace_filters_include_only = [
+    "AWS/EC2",
+    "AWS/ECS",
+    "AWS/EKS",
+    "AWS/ElastiCache",
+    "AWS/Lambda",
+    "AWS/RDS",
+    "AWS/S3",
+  ]
 }

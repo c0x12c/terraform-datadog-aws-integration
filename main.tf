@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "datadog_aws_integration_assume_role" {
       variable = "sts:ExternalId"
 
       values = [
-        datadog_integration_aws.sandbox.external_id
+        datadog_integration_aws_account.sandbox.auth_config.aws_auth_config_role.external_id
       ]
     }
   }
@@ -50,13 +50,45 @@ resource "aws_iam_role_policy_attachment" "datadog_aws_integration_managed" {
 
 /**
 Create and manage Datadog - Amazon Web Services integration.
-version = "~> 3.46.0"
-https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_aws
+version = "~> 4.9.0"
+https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/integration_aws_account
  */
-resource "datadog_integration_aws" "sandbox" {
-  account_id                           = data.aws_caller_identity.this.account_id
-  role_name                            = var.datadog_aws_integration_iam_role
-  extended_resource_collection_enabled = false
-  metrics_collection_enabled           = true
-  account_specific_namespace_rules     = var.aws_services_enabled == null ? local.aws_services_enabled : var.aws_services_enabled
+resource "datadog_integration_aws_account" "sandbox" {
+  aws_account_id = data.aws_caller_identity.this.account_id
+  aws_partition  = "aws"
+
+  auth_config {
+    aws_auth_config_role {
+      role_name = var.datadog_aws_integration_iam_role
+    }
+  }
+
+  aws_regions {}
+
+  logs_config {
+    lambda_forwarder {}
+  }
+
+  metrics_config {
+    enabled = true
+    namespace_filters {
+      include_only = var.namespace_filters_include_only
+      exclude_only = var.namespace_filters_exclude_only
+    }
+  }
+
+  resources_config {
+    extended_collection = var.extended_collection
+  }
+
+  traces_config {
+    xray_services {}
+  }
+
+  lifecycle {
+    precondition {
+      condition     = !(var.namespace_filters_include_only != null && var.namespace_filters_exclude_only != null)
+      error_message = "namespace_filters_include_only and namespace_filters_exclude_only are mutually exclusive; set only one."
+    }
+  }
 }
