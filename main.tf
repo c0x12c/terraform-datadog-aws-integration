@@ -78,7 +78,7 @@ resource "datadog_integration_aws_account" "sandbox" {
   }
 
   resources_config {
-    extended_collection = false
+    extended_collection = var.extended_collection
   }
 
   traces_config {

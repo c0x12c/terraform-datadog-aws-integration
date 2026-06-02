@@ -27,3 +27,9 @@ variable "aws_attached_policy_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "extended_collection" {
+  description = "Enable Datadog's extended resource collection, which allows additional resource tags and configuration information to be collected. Reference: https://docs.datadoghq.com/integrations/amazon_web_services/#resource-collection."
+  type        = bool
+  default     = false
+}
