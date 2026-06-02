@@ -55,25 +55,35 @@ jobs:
         uses: actions/checkout@v6
         with:
           token: ${{ steps.github-app-token.outputs.token }}
-          ref: ${{ github.head_ref }}
-
+          ref: ${{ github.ref }}
 
       # Extract the first (latest) version mentioned in the changelog
       - name: Extract Version from Changelog
         id: extract_version
         run: |
           VERSION=$(grep -oE '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | sed 's/^## \[//;s/]$//')
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not extract version from CHANGELOG.md"
+            exit 1
+          fi
           echo "Extracted version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # Extract only the changelog content of specified version
+      # Extract only the changelog content for the specified version
       - name: Extract Changelog
         id: changelog
-        uses: nickohold/changelog-version-extractor@v1.0.0
-        with:
-          version_prefix: "## ["
-          version: ${{ env.VERSION }}
-          changelog_path: "./CHANGELOG.md"
+        run: |
+          VERSION="${{ env.VERSION }}"
+          ESCAPED=$(printf '%s' "$VERSION" | sed 's/\./\\./g')
+          CONTENT=$(awk "/^## \[${ESCAPED}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          if [ -z "$CONTENT" ]; then
+            echo "::error::Could not extract changelog for version ${VERSION}"
+            exit 1
+          fi
+          DELIMITER="CHANGELOG_EOF_$RANDOM"
+          echo "changelog<<${DELIMITER}" >> $GITHUB_OUTPUT
+          printf '%s\n' "$CONTENT" >> $GITHUB_OUTPUT
+          echo "${DELIMITER}" >> $GITHUB_OUTPUT
 
       # Echo the output from the `changelog` step
       - name: Echo the output
@@ -87,6 +97,6 @@ jobs:
         with:
           tag_name: "v${{ env.VERSION }}"
           release_name: "v${{ env.VERSION }}"
-          body: "${{ steps.changelog.outputs.changelog }}"
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
